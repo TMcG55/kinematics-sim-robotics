@@ -48,17 +48,17 @@ void eulerZ(double p_zero[3], double alpha, double p_transformed[3])
 }
 void eulerY(double p_zero[3], double beta, double p_transformed[3])
 {
-    double c_alpha = cos(beta);
-    double s_alpha = sin(beta);
-    double rotation_y[R1][C1] = {{c_alpha,-s_alpha,0},{s_alpha,c_alpha,0},{0,0,1}};
+    double c_beta = cos(beta);
+    double s_beta = sin(beta);
+    double rotation_y[R1][C1] = {{c_beta,0,s_beta},{0,1,0},{-s_beta,0,c_beta}};
 
     multiplyMatrix(rotation_y, p_zero,p_transformed);
 }
 void eulerX(double p_zero[3], double gamma, double p_transformed[3])
 {
-    double c_alpha = cos(gamma);
-    double s_alpha = sin(gamma);
-    double rotation_z[R1][C1] = {{c_alpha,-s_alpha,0},{s_alpha,c_alpha,0},{0,0,1}};
+    double c_gamma = cos(gamma);
+    double s_gamma = sin(gamma);
+    double rotation_z[R1][C1] = {{c_gamma,-s_gamma,0},{s_gamma,c_gamma,0},{0,0,1}};
 
     multiplyMatrix(rotation_z, p_zero,p_transformed);
 }
@@ -66,9 +66,9 @@ void eulerX(double p_zero[3], double gamma, double p_transformed[3])
 int main()
 {
 
-    double  alpha=M_PI/2;
-    double  beta=M_PI/2;
-    double  gamma=M_PI/2;
+    double  alpha=M_PI/3;
+    double  beta=M_PI/15;
+    double  gamma=M_PI/5;
     double  s_alpha=sin(alpha);
     double  c_alpha=cos(alpha);
 
