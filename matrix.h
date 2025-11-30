@@ -4,6 +4,8 @@
 typedef double vec2[2];
 typedef double vec3[3];
 typedef double vec4[4];
+typedef double vec5[5];
+typedef double vec6[6];
 typedef double mat2[2][2];
 typedef double mat3[3][3];
 typedef double mat4[4][4];

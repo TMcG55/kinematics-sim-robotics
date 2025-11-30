@@ -15,6 +15,7 @@
 void eulerZYX(double alpha, double beta, double gamma, mat3 R);
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation);
 void dhTransformationMatrix(double alpha, double theta, double a, double d, mat4 T);
+void forwardKinematics6(vec6 A_i,vec6 alpha_i,vec6 D_i,vec6 theta_i,int n,vec3 end_pos,mat3 end_rotation);
 
 int main()
 {
@@ -53,6 +54,28 @@ int main()
     printf("Homogoenous tranform of p1 to p0:\n");
     for(int i=0;i<3;i++){
         printf(" %f \n",p_zero[i]);
+    }
+
+    // Example of 6DOF robot End effector position calculation using DH convention
+    vec6 A_i ={0,0.2,0,0,0,0};
+    vec6 alpha_i ={M_PI/2,0,M_PI/2,-M_PI/2,M_PI/2,0};
+    vec6 D_i ={0.3,0,0,0.2,0,0.1};
+    vec6 theta_i ={0,0,0,0,0,0};
+    int n = 6;
+    mat3 end_rotation = {0};
+    vec3 end_pos = {0};
+    forwardKinematics6(A_i,alpha_i,D_i,theta_i,n,end_pos,end_rotation);
+
+    printf("print end position relative to origin: \n");
+    for(int i=0;i<3;i++){
+        printf(" %f \n",end_pos[i]);
+    }
+    printf("print end rotation relative to origin: \n");
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            printf(" %f ",end_rotation[i][j]);
+        }
+        printf("\n");
     }
 
     return 0; 
@@ -97,33 +120,64 @@ void dhTransformationMatrix(double alpha, double theta, double a, double d, mat4
     T[1][0] = St;
     T[1][1] = Ct*Ca;
     T[1][2] = -Ct*Sa;
-    T[1][4] = a*St;
+    T[1][3] = a*St;
 
     T[2][0] = 0;
     T[2][1] = Sa;
     T[2][2] = Ca;
-    T[2][4] = d;
+    T[2][3] = d;
 
     T[3][0] = 0;
     T[3][1] = 0;
     T[3][2] = 0;
-    T[3][4] = 1;
+    T[3][3] = 1;
+
 }
 
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation){
     mat4 T={0};
     //build homognenousTransform
     for (int i=0;i<3;i++){
-        for (int j=0;j<4;j++){
+        for (int j=0;j<3;j++){
                T[i][j]=rotation[i][j];
-       T[i][3]=origin[i];
         }
+        T[i][3]=origin[i];
     }
-    T[3][3]=1;
+    T[3][0] = 0;
+    T[3][1] = 0;
+    T[3][2] = 0;
+    T[3][3] = 1;
 
     //apply transform
     for (int i=0; i<3; i++){
         p_zero[i] = p_one[0]*T[i][0] + p_one[1]*T[i][1] + p_one[2]*T[i][2] + T[i][3];
+    }
+}
+
+void forwardKinematics6(vec6 A_i,vec6 alpha_i,vec6 D_i,vec6 theta_i,int n,vec3 end_pos,mat3 end_rotation){
+
+    mat4 T_old;
+    mat4 T;
+    mat4 T_temp;
+
+    // First link
+    dhTransformationMatrix(alpha_i[0],theta_i[0],A_i[0],D_i[0],T_old);
+
+    for(int i=1;i<n;i++){
+        dhTransformationMatrix(alpha_i[i],theta_i[i],A_i[i],D_i[i],T);
+        mat4_mul(T_old,T,T_temp);
+        memcpy(T_old,T_temp,sizeof(mat4));
+        }
+    
+    for(int k=0;k<3;k++){
+        for(int j=0;j<4;j++){
+            if(j<3){
+                end_rotation[k][j] = T_old[k][j];
+            }
+            if(j==3){
+                end_pos[k]=T_old[k][j];
+            }
+        }
     }
 }
 
