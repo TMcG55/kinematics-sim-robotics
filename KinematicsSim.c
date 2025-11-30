@@ -2,58 +2,39 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "matrix.h"
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846264338327950288)
 #endif
-typedef double vec3[3];
-typedef double vec4[4];
-typedef double mat3[3][3];
-typedef double mat4[4][4];
+// typedef double vec3[3];
+// typedef double vec4[4];
+// typedef double mat3[3][3];
+// typedef double mat4[4][4];
 
-void multiplyMatrix(mat3 rotation_matrix, vec3 p_one,vec3 p_zero);
-void eulerZ(vec3 p_one, double alpha, vec3 p_zero);
-void eulerY(vec3 p_one, double beta, vec3 p_zero);
-void eulerX(vec3 p_one, double gamma, vec3 p_zero);
+void eulerZYX(double alpha, double beta, double gamma, mat3 R);
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation);
 
 
 int main()
 {
+    // Example of Euler Transform
+    double  alpha=M_PI/2;
+    double  beta=0;
+    double  gamma=0;
+    mat3 R = {0};
 
-    // double  alpha=M_PI/3;
-    // double  beta=M_PI/15;
-    // double  gamma=M_PI/5;
-    // vec3 p_one = 
-    //    {2,
-    //     2,
-    //     1};
-    // vec3 p_zero=
-    //    {0,
-    //     0,
-    //     0};
-    
+    eulerZYX(alpha,beta,gamma,R);
 
-    // //  Function call
-    // printf("----------------------------------\n");
-    // printf("Z rotate\n");
-    // printf("----------------------------------\n");
-    // eulerZ(p_one,alpha,p_zero);
+    printf("Rotational matrix from EulerZYX\n");
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            printf(" %f ",R[i][j]);
+        }
+        printf("\n");
+    }
 
-    // printf("----------------------------------\n");
-    // printf("Y rotate\n");
-    // printf("----------------------------------\n");
-    // for (int i=0;i<3;i++)
-    //     p_one[i]=p_zero[i];
-    // eulerY(p_one,beta,p_zero);
-
-    // printf("----------------------------------\n");
-    // printf("Z rotate\n");
-    // printf("----------------------------------\n");
-    // for (int i=0;i<3;i++)
-    //     p_one[i]=p_zero[i];
-    // eulerZ(p_one,gamma,p_zero);
-    
+    // Example of homogeneous Transform
     vec3 origin = 
        {0,
         3,
@@ -67,70 +48,36 @@ int main()
         0,
         0};
     mat3 rotation = {{1,0,0},{0,0,-1},{0,1,0}};
-    mat4 t;
-
     homogeneousTransform(p_one,p_zero,origin,rotation);
 
-    printf("point referenced from the origin:\n");
+    printf("Homogoenous tranform of p1 to p0:\n");
     for(int i=0;i<3;i++){
         printf(" %f \n",p_zero[i]);
     }
     return 0; 
 }
 
+void eulerZYX(double alpha, double beta, double gamma, mat3 R){
+    double Ca = cos(alpha);
+    double Cb = cos(beta);
+    double Cg = cos(gamma);
+    double Sa = sin(alpha);
+    double Sb = sin(beta);
+    double Sg = sin(gamma);
+    R[0][0] = Ca*Cb;
+    R[0][1] = Ca*Sb*Sg - Sa*Cg;
+    R[0][2] = Ca*Sb*Cg + Sa*Sg;
 
-void multiplyMatrix(mat3 rotation_matrix, vec3 p_one,vec3 p_zero)
-{
-    printf("p_one\n");
-    for (int i=0;i<3;i++)
-        printf(" %f \n",p_one[i]);
+    R[1][0] = Sa*Cb;
+    R[1][1] = Sa*Sb*Sg + Ca*Cg;
+    R[1][2] = Sa*Sb*Cg - Ca*Sg;
 
-    printf("rotation_matrix \n");
-    for (int i=0;i<3;i++){
-        for (int j=0;j<3;j++){
-            printf(" %f ",rotation_matrix[i][j]);
-        }
-        printf("\n");
-    }
-    printf("p_zero\n");    
-    for (int i=0;i<3;i++){
-        p_zero[i]=0;
-        for (int j=0;j<3;j++){
-            p_zero[i]+=p_one[j]*rotation_matrix[i][j];
-        }
-        printf("%f\n",p_zero[i]);
-    }
-
-} 
-
-void eulerZ(vec3 p_one, double alpha, vec3 p_zero)
-{
-
-    double c_alpha = cos(alpha);
-    double s_alpha = sin(alpha);
-    double rotation_z[3][3] = {{c_alpha,-s_alpha,0},{s_alpha,c_alpha,0},{0,0,1}};
-
-    multiplyMatrix(rotation_z, p_one,p_zero);
-}
-void eulerY(vec3 p_one, double beta, vec3 p_zero)
-{
-    double c_beta = cos(beta);
-    double s_beta = sin(beta);
-    double rotation_y[3][3] = {{c_beta,0,s_beta},{0,1,0},{-s_beta,0,c_beta}};
-
-    multiplyMatrix(rotation_y, p_one,p_zero);
-}
-void eulerX(vec3 p_one, double gamma, vec3 p_zero)
-{
-    double c_gamma = cos(gamma);
-    double s_gamma = sin(gamma);
-    double rotation_z[3][3] = {{c_gamma,-s_gamma,0},{s_gamma,c_gamma,0},{0,0,1}};
-
-    multiplyMatrix(rotation_z, p_one,p_zero);
+    R[2][0] = -Sb;
+    R[2][1] = Cb*Sg;
+    R[2][2] = Cb*Cg;
 }
 
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation){
-    vec4 p1;
     mat4 T={0};
     //build homognenousTransform
     for (int i=0;i<3;i++){
