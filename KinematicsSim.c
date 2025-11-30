@@ -14,7 +14,7 @@
 
 void eulerZYX(double alpha, double beta, double gamma, mat3 R);
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation);
-
+void dhTransformationMatrix(double alpha, double theta, double a, double d, mat4 T);
 
 int main()
 {
@@ -54,6 +54,7 @@ int main()
     for(int i=0;i<3;i++){
         printf(" %f \n",p_zero[i]);
     }
+
     return 0; 
 }
 
@@ -64,6 +65,7 @@ void eulerZYX(double alpha, double beta, double gamma, mat3 R){
     double Sa = sin(alpha);
     double Sb = sin(beta);
     double Sg = sin(gamma);
+
     R[0][0] = Ca*Cb;
     R[0][1] = Ca*Sb*Sg - Sa*Cg;
     R[0][2] = Ca*Sb*Cg + Sa*Sg;
@@ -75,6 +77,37 @@ void eulerZYX(double alpha, double beta, double gamma, mat3 R){
     R[2][0] = -Sb;
     R[2][1] = Cb*Sg;
     R[2][2] = Cb*Cg;
+}
+
+void dhTransformationMatrix(double alpha, double theta, double a, double d, mat4 T){
+    // must follow DH convention:
+    // axis X1 perpendiculat to Z0
+    // axis X1 intercepts Z0
+
+    double Ca = cos(alpha);
+    double Ct = cos(theta);
+    double Sa = sin(alpha);
+    double St = sin(theta);
+
+    T[0][0] = Ct;
+    T[0][1] = -St*Ca;
+    T[0][2] = St*Sa;
+    T[0][3] = a*Ct;
+
+    T[1][0] = St;
+    T[1][1] = Ct*Ca;
+    T[1][2] = -Ct*Sa;
+    T[1][4] = a*St;
+
+    T[2][0] = 0;
+    T[2][1] = Sa;
+    T[2][2] = Ca;
+    T[2][4] = d;
+
+    T[3][0] = 0;
+    T[3][1] = 0;
+    T[3][2] = 0;
+    T[3][4] = 1;
 }
 
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation){
