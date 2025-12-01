@@ -13,6 +13,8 @@
 // typedef double mat4[4][4];
 
 void eulerZYX(double alpha, double beta, double gamma, mat3 R);
+void eulerZYZ(double alpha, double beta, double gamma, mat3 R);
+void eulerZYZinverse(vec2 alpha, vec2 beta, vec2 gamma, mat3 R);
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation);
 void dhTransformationMatrix(double alpha, double theta, double a, double d, mat4 T);
 void forwardKinematics6(vec6 A_i,vec6 alpha_i,vec6 D_i,vec6 theta_i,int n,vec3 end_pos,mat3 end_rotation);
@@ -26,7 +28,7 @@ int main()
     mat3 R = {0};
 
     eulerZYX(alpha,beta,gamma,R);
-
+    printf("-------------------------------\n");
     printf("Rotational matrix from EulerZYX\n");
     for(int i=0;i<3;i++){
         for(int j=0;j<3;j++){
@@ -36,6 +38,7 @@ int main()
     }
 
     // Example of homogeneous Transform
+    printf("-------------------------------\n");
     vec3 origin = 
        {0,
         3,
@@ -50,17 +53,18 @@ int main()
         0};
     mat3 rotation = {{1,0,0},{0,0,-1},{0,1,0}};
     homogeneousTransform(p_one,p_zero,origin,rotation);
-
+    
     printf("Homogoenous tranform of p1 to p0:\n");
     for(int i=0;i<3;i++){
         printf(" %f \n",p_zero[i]);
     }
 
     // Example of 6DOF robot End effector position calculation using DH convention
+    printf("-------------------------------\n");
     vec6 A_i ={0,0.2,0,0,0,0};
     vec6 alpha_i ={M_PI/2,0,M_PI/2,-M_PI/2,M_PI/2,0};
     vec6 D_i ={0.3,0,0,0.2,0,0.1};
-    vec6 theta_i ={0,0,0,0,0,0};
+    vec6 theta_i ={M_PI/2,0,M_PI/2,-M_PI/2,M_PI/2,0};
     int n = 6;
     mat3 end_rotation = {0};
     vec3 end_pos = {0};
@@ -78,10 +82,37 @@ int main()
         printf("\n");
     }
 
+
+    // zyz forwards and backwards
+    printf("-------------------------------\n");
+    vec2 a={M_PI/3,0};
+    vec2 b={M_PI/5,0};
+    vec2 g={0.22,0};
+    mat3 r;
+    
+    eulerZYZ(a[0],b[0],g[0],r);
+    printf("ZYZ forwards: \n");
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            printf(" %f ",r[i][j]);
+        }
+        printf("\n");
+    }
+    printf("angles calculated backwards: \n");
+    printf("target a[0]: %f\n",a[0]);
+    printf("target b[0]: %f\n",b[0]);
+    printf("target g[0]: %f\n",g[0]);
+    eulerZYZinverse(a,b,g,r);
+    printf("actual a[0]: %f\n",a[0]);
+    printf("actual b[0]: %f\n",b[0]);
+    printf("actual g[0]: %f\n",g[0]);
+
     return 0; 
 }
 
 void eulerZYX(double alpha, double beta, double gamma, mat3 R){
+    // Calculates a rotation matrix from given angles of rotation through Z -> Y -> X
+
     double Ca = cos(alpha);
     double Cb = cos(beta);
     double Cg = cos(gamma);
@@ -100,6 +131,51 @@ void eulerZYX(double alpha, double beta, double gamma, mat3 R){
     R[2][0] = -Sb;
     R[2][1] = Cb*Sg;
     R[2][2] = Cb*Cg;
+}
+
+void eulerZYZ(double alpha, double beta, double gamma, mat3 R){
+    // Calculates a rotation matrix from given angles of rotation through Z -> Y -> Z
+    // Useful for wrist joints
+
+    double Ca = cos(alpha);
+    double Cb = cos(beta);
+    double Cg = cos(gamma);
+    double Sa = sin(alpha);
+    double Sb = sin(beta);
+    double Sg = sin(gamma);
+
+    R[0][0] = Ca*Cb*Cg-Sa*Sg;
+    R[0][1] = -Ca*Cb*Sg-Sa*Cg;
+    R[0][2] = Ca*Sb;
+
+    R[1][0] = Sa*Cb*Cg+Ca*Sg;
+    R[1][1] = -Sa*Cb*Sg+Ca*Cg;
+    R[1][2] = Sa*Sb;
+
+    R[2][0] = -Sb*Cg;
+    R[2][1] = Sb*Sg;
+    R[2][2] = Cb;
+}
+
+void eulerZYZinverse(vec2 alpha, vec2 beta, vec2 gamma, mat3 R){
+    // Calculate the angles requires to achieve a transform R
+    // Useful for wrist joints
+    // 
+
+    beta[0] = atan2(sqrt(1-R[2][2]*R[2][2]),R[2][2]);
+    double Sb = sin(beta[0]);
+    if (fabs(Sb)<0.01){
+        printf("singularity in inverse ZYZ, alpha and gamma chosen arbitrarily");
+        alpha[0]=atan2(R[1][0],R[0][0]);
+        gamma[0]=0;
+        alpha[1]=atan2(-R[1][0],R[0][0]);
+        gamma[1]=0;
+    } else {
+        alpha[0] = atan2(R[1][2]/Sb,R[0][2]/Sb);
+        gamma[0] = atan2(R[2][1]/Sb,-R[2][0]/Sb);
+        alpha[1] = atan2(-R[1][2]/Sb,-R[0][2]/Sb);
+        gamma[1] = atan2(-R[2][1]/Sb,R[2][0]/Sb);
+    }
 }
 
 void dhTransformationMatrix(double alpha, double theta, double a, double d, mat4 T){
@@ -135,6 +211,9 @@ void dhTransformationMatrix(double alpha, double theta, double a, double d, mat4
 }
 
 void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation){
+    // Converts vector P1 in reference frame 1 to p0 in frame 0 using translation and rotation
+    // from 0 -> 1
+
     mat4 T={0};
     //build homognenousTransform
     for (int i=0;i<3;i++){
@@ -155,6 +234,10 @@ void homogeneousTransform(vec3 p_one,vec3 p_zero,vec3 origin,mat3 rotation){
 }
 
 void forwardKinematics6(vec6 A_i,vec6 alpha_i,vec6 D_i,vec6 theta_i,int n,vec3 end_pos,mat3 end_rotation){
+    // Calculates the forward kinematics of a 6DOF robot using DH convention to
+    // give end effector position in cartesian coordinates and rotation relative to
+    // the base frame
+
 
     mat4 T_old;
     mat4 T;
@@ -179,6 +262,6 @@ void forwardKinematics6(vec6 A_i,vec6 alpha_i,vec6 D_i,vec6 theta_i,int n,vec3 e
             }
         }
     }
-}
+} 
 
   
