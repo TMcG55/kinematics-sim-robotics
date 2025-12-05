@@ -1,4 +1,4 @@
-# SimpleOpenGL 2D Robot Animation
+# Robotic Simulation
 
 A simple project demonstrating 2D planar robot animation. The aim of this development is to build a full simulation for a variety of robotics from the ground up using homemade libraries, and visualisation using openGL.
 
