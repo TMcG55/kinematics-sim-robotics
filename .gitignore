@@ -1,0 +1,9 @@
+/build/
+/bin/*.pdb
+*.obj
+*.o
+*.log
+.DS_Store
+/.vscode/
+*.txt
+/CMakeFiles/
