@@ -65,7 +65,7 @@ int main() {
     // Parameters for orbit
     float orbitRadius = 2.5f;       // distance from origin
     float orbitSpeed  = 0.000f;      // radians per frame
-    float orbitAngle  = M_PI/4;       // current angle
+    float orbitAngle  = M_PI/2;       // current angle
     float fixedZ      = 1.0f;       // height of camera above XY-plane
 
 
@@ -132,26 +132,39 @@ int main() {
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
-    
-
+    double tStart = glfwGetTime();
+    int animationSequencer =0;
     // ---------------- Render loop ----------------
     while(!glfwWindowShouldClose(window)){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        double t = glfwGetTime();
         // Animate joints
-        theta[0]+=0.004f; theta[1]-=0.005f; theta[2]+=0.006f;
-        theta[3]-=0.005f; theta[4]+=0.0006f; theta[5]-=0.007f;
-        for(int i=0;i<6;i=i+2){
-            printf("theta[%d]: %f ",i,theta[i]);
-            if(theta[i]>=M_PI)
-                theta[i]-=2*M_PI;
+        theta[1]=cos(tStart); theta[2]=cos(tStart);
+        theta[3]=cos(tStart); theta[4]+=0.0000f; theta[5]-=0.000f;
+
+     
+        theta[animationSequencer]=cos(t-tStart);
+        if ((t-tStart)>=2*M_PI){
+            tStart=t;
+            animationSequencer+=1;
+            if (animationSequencer==5){
+                animationSequencer=0;
+            }
         }
-        for(int i=1;i<6;i=i+2){
-            printf("theta[%d]: %f ",i,theta[i]);
-            if(theta[i]<=-M_PI)
-                theta[i]+=2*M_PI;
-        }
-        printf("\n");
+
+
+        // for(int i=0;i<6;i=i+2){
+        //     printf("theta[%d]: %f ",i,theta[i]);
+        //     if(theta[i]>=M_PI)
+        //         theta[i]-=2*M_PI;
+        // }
+        // for(int i=1;i<6;i=i+2){
+        //     printf("theta[%d]: %f ",i,theta[i]);
+        //     if(theta[i]<=-M_PI)
+        //         theta[i]+=2*M_PI;
+        // }
+        // printf("\n");
         transforms = forwardKinematics6new(Ai, alpha, Di, theta);
 
         // for (int k = 0; k < 6; k++) {
